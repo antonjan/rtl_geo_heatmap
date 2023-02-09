@@ -4,6 +4,7 @@ Hello World, but with more meat.
 """
 
 import wx
+import wx.html
 
 class MainFrame(wx.Frame):
     """
@@ -23,6 +24,16 @@ class MainFrame(wx.Frame):
         font.PointSize += 10
         font = font.Bold()
         st.SetFont(font)
+        
+        # adding html viewer
+        html = wx.html.HtmlWindow(self) 
+        if "gtk2" in wx.PlatformInfo: 
+            html.SetStandardFonts()
+        
+        # Alternatively render raw HTML with the SetPage method
+        # html.SetPage("<h4>Hello World</h4>") 
+        # Render a local HTML file
+        html.LoadPage("folium_map.html") 
 
         # and create a sizer to manage the layout of child widgets
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -117,5 +128,6 @@ if __name__ == '__main__':
     # frame, show it, and start the event loop.
     app = wx.App()
     frm = MainFrame(None, title='Geo Heatmap recorder')
+#    frm = MyHtmlFrame(None, "Simple HTML File Viewer")  
     frm.Show()
     app.MainLoop()
