@@ -5,6 +5,11 @@ Hello World, but with more meat.
 
 import wx
 import wx.html
+import webbrowser
+from rtlsdr import *
+from numpy import *
+import time
+from pylab import *
 
 class MainFrame(wx.Frame):
     """
@@ -19,9 +24,9 @@ class MainFrame(wx.Frame):
         pnl = wx.Panel(self)
 
         # put some text with a larger bold font on it
-        st = wx.StaticText(pnl, label="Heatmap Recording!")
+        st = wx.StaticText(pnl, label="")
         font = st.GetFont()
-        font.PointSize += 10
+        font.PointSize += 3
         font = font.Bold()
         st.SetFont(font)
         
@@ -64,7 +69,11 @@ class MainFrame(wx.Frame):
         startMenu = wx.Menu()
         startstopMenu = wx.Menu()
         startItem = startMenu.Append(-1, "&Start...\tCtrl-N", "Start Recording RF signal strenth")
-        stoptItem = startMenu.Append(-1, "&Stop...\tCtrl-N", "Stop Recording RF signal strenth")    
+        stopItem = startMenu.Append(-1, "&Stop...\tCtrl-N", "Stop Recording RF signal strenth")
+        
+        #Map menu
+        mapMenu = wx.Menu()
+        mapItem = mapMenu.Append(-1, "&Show Map...\tCtrl-N", "Display the Heatmap")     
         # Now a help menu for the about item
         helpMenu = wx.Menu()
         aboutItem = helpMenu.Append(wx.ID_ABOUT)
@@ -77,6 +86,7 @@ class MainFrame(wx.Frame):
         
         menuBar.Append(fileMenu, "&File")
         menuBar.Append(startMenu,"Start/Stop")
+        menuBar.Append(mapMenu,"Heatmap")
         menuBar.Append(helpMenu, "&Help")
         
         
@@ -93,7 +103,9 @@ class MainFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.OnNew, newItem)
         self.Bind(wx.EVT_MENU, self.OnSave, saveItem)
         self.Bind(wx.EVT_MENU, self.OnOpen, openItem)
-        
+        self.Bind(wx.EVT_MENU, self.OnStart, startItem)
+        self.Bind(wx.EVT_MENU, self.OnStop, stopItem)
+        self.Bind(wx.EVT_MENU, self.OnMap, mapItem)
 
     def OnExit(self, event):
         """Close the frame, terminating the application."""
@@ -121,6 +133,56 @@ class MainFrame(wx.Frame):
         """Open file dialog box."""
         wx.MessageBox("Open file dialog box")
         
+    def OnStart(self, event):
+        """Start recording rtl power measurmrnts."""
+#       sdr.read_samples_async(power_meter_callback)
+        sdr = RtlSdr()
+
+        # configure device
+        sdr.sample_rate = 2.048e6  # Hz
+        sdr.center_freq = 70e6     # Hz
+        sdr.freq_correction = 60   # PPM
+        sdr.gain = 'auto'
+        samples = sdr.read_samples(256*1024)
+        self.lblname = wx.StaticText(self, label='relative power: %0.1f dB' % (10*log10(var(samples))), pos=(20,60))
+#        self.editname = wx.TextCtrl(self, value="Enter here your name", pos=(150, 60), size=(140,-1))
+        sdr.close()
+
+        # use matplotlib to estimate and plot the PSD
+#        psd(samples, NFFT=1024, Fs=sdr.sample_rate/1e6, Fc=sdr.center_freq/1e6)
+#        xlabel('Frequency (MHz)')
+#        ylabel('Relative power (dB)')
+#
+#        show()
+
+        print(samples)
+        print ('relative power: %0.1f dB' % (10*log10(var(samples))))
+        
+    def OnStop(self, event):
+        """Stop recording rtl power measurmrnts."""
+        sdr.read_samples_async()
+#       wx.MessageBox("Stop recording rtl Power Measurements")            
+        
+    def OnMap(self, event):
+        """Open Map in browser."""
+        new = 2 # open in a new tab, if possible
+
+        # open a public URL, in this case, the webbrowser docs
+        #url = "http://docs.python.org/library/webbrowser.html"
+        #webbrowser.open(url,new=new)
+
+        # open an HTML file on my own (Windows) computer
+        #url = "file:///home/anton/rtl_geo_heatmap/folium_map.html"
+        #webbrowser.open(url,new=new)
+
+        # open an HTML file on my own (Windows) computer
+        url = "folium_map.html"
+        webbrowser.open(url,new=new)
+
+        wx.MessageBox("Open Map in Browser")
+        
+         
+        
 if __name__ == '__main__':
     # When this module is run (not imported) then create the app, the
     # frame, show it, and start the event loop.
@@ -128,4 +190,22 @@ if __name__ == '__main__':
     frm = MainFrame(None, title='Geo Heatmap recorder')
 #    frm = MyHtmlFrame(None, "Simple HTML File Viewer")  
     frm.Show()
+#    @limit_calls(9)
+#    def power_meter_callback(samples, sdr):
+#        print ('relative power: %0.1f dB' % (10*log10(var(samples))))
+#        time.sleep(3)
+#        wx.MessageBox("Start recording rtl Power Measurements")
+   
+#    sdr = RtlSdr()
+#   sdr.sample_rate = 1.2e6
+#    sdr.center_freq = 145.950e6
+#    sdr.gain = 63
+#    sdr.freq_correction = 60
+    #sdr.gain = 'auto'
+    #set_bandwidth
+    #set_direct_sampling()
+    #samples = sdr.read_samples(256*1024)
+    #sdr.close()
+    #set_direct_sampling
+    
     app.MainLoop()
