@@ -25,19 +25,9 @@ class MainFrame(wx.Frame):
         font = font.Bold()
         st.SetFont(font)
         
-        # adding html viewer
-        html = wx.html.HtmlWindow(self) 
-        if "gtk2" in wx.PlatformInfo: 
-            html.SetStandardFonts()
-        
-        # Alternatively render raw HTML with the SetPage method
-        # html.SetPage("<h4>Hello World</h4>") 
-        # Render a local HTML file
-        html.LoadPage("folium_map.html") 
-
         # and create a sizer to manage the layout of child widgets
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(st, wx.SizerFlags().Border(wx.TOP|wx.LEFT, 25))
+        sizer.Add(st, wx.SizerFlags().Border(wx.TOP|wx.LEFT, 50))
         pnl.SetSizer(sizer)
 
         # create a menu bar
@@ -68,7 +58,13 @@ class MainFrame(wx.Frame):
         
         newItem = fileMenu.Append(-1, "&New...\tCtrl-N", "Creating a New recording file")
         saveItem = fileMenu.Append(-1, "&Save...\tCtrl-S","Saving recorded file")
-        openItem = fileMenu.Append(-1, "&Open...\tCtrl-O", "Open exsiting recording")       
+        openItem = fileMenu.Append(-1, "&Open...\tCtrl-O", "Open exsiting recording")   
+        
+        # Strat and Stop recording meny
+        startMenu = wx.Menu()
+        startstopMenu = wx.Menu()
+        startItem = startMenu.Append(-1, "&Start...\tCtrl-N", "Start Recording RF signal strenth")
+        stoptItem = startMenu.Append(-1, "&Stop...\tCtrl-N", "Stop Recording RF signal strenth")    
         # Now a help menu for the about item
         helpMenu = wx.Menu()
         aboutItem = helpMenu.Append(wx.ID_ABOUT)
@@ -80,7 +76,9 @@ class MainFrame(wx.Frame):
         menuBar = wx.MenuBar()
         
         menuBar.Append(fileMenu, "&File")
+        menuBar.Append(startMenu,"Start/Stop")
         menuBar.Append(helpMenu, "&Help")
+        
         
 
         # Give the menu bar to the frame
