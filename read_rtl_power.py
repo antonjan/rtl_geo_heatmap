@@ -17,4 +17,4 @@ sdr.freq_correction = 60
 #samples = sdr.read_samples(256*1024)
 #sdr.close()
 #set_direct_sampling
-sdr.read_samples_async(power_meter_callback)
+#sdr.read_samples_async(power_meter_callback)
