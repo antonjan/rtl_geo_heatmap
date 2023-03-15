@@ -2,7 +2,9 @@
 """
 Hello World, but with more meat.
 """
-
+import serial
+import pandas as pd
+import geopandas as gpd
 import wx
 import wx.html
 import webbrowser
@@ -10,11 +12,19 @@ from rtlsdr import *
 from numpy import *
 import time
 from pylab import *
+import threading
+from threading import Thread, Event
+from time import sleep
+from queue import Queue
+import csv
 
 class MainFrame(wx.Frame):
     """
     Main frame
     """
+    
+    
+    
 
     def __init__(self, *args, **kw):
         # ensure the parent's __init__ is called
@@ -41,6 +51,45 @@ class MainFrame(wx.Frame):
         # and a status bar
         self.CreateStatusBar()
         self.SetStatusText("Welcome to wxPython!")
+#        form2 = FormWithSizer(notebook)
+        
+        
+
+    def doLayout(self):
+        ''' Layout the controls by means of sizers. '''
+
+        # A horizontal BoxSizer will contain the GridSizer (on the left)
+        # and the logger text control (on the right):
+        boxSizer = wx.BoxSizer(orient=wx.HORIZONTAL)
+        # A GridSizer will contain the other controls:
+        gridSizer = wx.FlexGridSizer(rows=5, cols=2, vgap=10, hgap=10)
+
+        # Prepare some reusable arguments for calling sizer.Add():
+        expandOption = dict(flag=wx.EXPAND)
+        noOptions = dict()
+        emptySpace = ((0, 0), noOptions)
+    
+        # Add the controls to the sizers:
+        for control, options in \
+                [(self.nameLabel, noOptions),
+                 (self.nameTextCtrl, expandOption),
+                 (self.referrerLabel, noOptions),
+                 (self.referrerComboBox, expandOption),
+                  emptySpace,
+                 (self.insuranceCheckBox, noOptions),
+                  emptySpace,
+                 (self.colorRadioBox, noOptions),
+                  emptySpace, 
+                 (self.saveButton, dict(flag=wx.ALIGN_CENTER))]:
+            gridSizer.Add(control, **options)
+
+        for control, options in \
+                [(gridSizer, dict(border=5, flag=wx.ALL)),
+                 (self.logger, dict(border=5, flag=wx.ALL|wx.EXPAND, 
+                    proportion=1))]:
+            boxSizer.Add(control, **options)
+
+        self.SetSizerAndFit(boxSizer)
 
 
     def makeMenuBar(self):
@@ -136,28 +185,8 @@ class MainFrame(wx.Frame):
     def OnStart(self, event):
         """Start recording rtl power measurmrnts."""
 #       sdr.read_samples_async(power_meter_callback)
-        sdr = RtlSdr()
-
-        # configure device
-        sdr.sample_rate = 2.048e6  # Hz
-        sdr.center_freq = 70e6     # Hz
-        sdr.freq_correction = 60   # PPM
-        sdr.gain = 'auto'
-        samples = sdr.read_samples(256*1024)
-        self.lblname = wx.StaticText(self, label='relative power: %0.1f dB' % (10*log10(var(samples))), pos=(20,60))
-#        self.editname = wx.TextCtrl(self, value="Enter here your name", pos=(150, 60), size=(140,-1))
-        sdr.close()
-
-        # use matplotlib to estimate and plot the PSD
-#        psd(samples, NFFT=1024, Fs=sdr.sample_rate/1e6, Fc=sdr.center_freq/1e6)
-#        xlabel('Frequency (MHz)')
-#        ylabel('Relative power (dB)')
-#
-#        show()
-
-        print(samples)
-        print ('relative power: %0.1f dB' % (10*log10(var(samples))))
-        
+        threadStreem = WorkerStreamming(event)
+        threadStreem.start()
     def OnStop(self, event):
         """Stop recording rtl power measurmrnts."""
         sdr.read_samples_async()
@@ -181,15 +210,132 @@ class MainFrame(wx.Frame):
 
         wx.MessageBox("Open Map in Browser")
         
-         
+    
         
+
+        
+              
+class WorkerStreamming(Thread,Queue):
+     def __init__(self, event, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.event = event
+        #self.queue = queue.Queue()
+     def getRFSignal():
+        rfPower = 0
+        try:
+            sdr = RtlSdr()
+            print ("geting power readings")
+		    # configure device
+            sdr.sample_rate = 2.048e6  # Hz
+            sdr.center_freq = 70e6     # Hz
+            sdr.freq_correction = 60   # PPM
+            sdr.gain = 'auto'
+            samples = sdr.read_samples(256*1024)
+            #self.lblname = wx.StaticText(self, label='relative power: %0.1f dB' % (10*log10(var(samples))), pos=(20,60))
+#           self.editname = wx.TextCtrl(self, value="Enter here your name", pos=(150, 60), size=(140,-1))
+           
+            #print(samples)
+            #print ('relative power: %0.1f dB' % (10*log10(var(samples))))
+            sdr.close()
+            rfPower = 10*log10(var(samples))
+            return rfPower
+        except Exception as e:
+            print("Oops!  RTL SDR not avalable.  Try again...")   
+     def parseGPS(data):
+        #print ("raw:", data) #prints raw data raw: b'$GPRMC,190722.00,A,2617.12440,S,02804.24041,E,0.118,,140323,,,D*64\r\n'
+        #print (">>>> ",data[0:6])
+        if data[0:6] == b'$GPRMC':
+           #print ("got GPRMC")
+           sdata = data.decode().split(",")
+           if sdata[2] == 'V':
+             print ("no satellite data available")
+             return
+           #print ("---Parsing GPRMC---",)
+           time = sdata[1][0:2] + ":" + sdata[1][2:4] + ":" + sdata[1][4:6]
+           lat = decode(sdata[3]) #latitude
+           dirLat = sdata[4]      #latitude direction N/S
+           lon = decode(sdata[5]) #longitute
+           dirLon = sdata[6]      #longitude direction E/W
+           speed = sdata[7]       #Speed in knots
+           trCourse = sdata[8]    #True course
+           date = sdata[9][0:2] + "/" + sdata[9][2:4] + "/" + sdata[9][4:6]#date
+           print ("time : %s, latitude : %s(%s), longitude : %s(%s), speed : %s, True Course : %s, Date : %s" %  (time,lat,dirLat,lon,dirLon,speed,trCourse,date))
+     def decode(coord):
+        #Converts DDDMM.MMMMM > DD deg MM.MMMMM min
+        x = coord.split(".")
+        head = x[0]
+        tail = x[1]
+        deg = head[0:-2]
+        min = head[-2:]
+        #print ("sdata = " , deg + " deg " + min + "." + tail + " min" )
+        return deg + " deg " + min + "." + tail + " min"   
+     def run(self) -> None:
+        print("Read GPS")   
+        port = "/dev/ttyACM0"
+        print ("Receiving GPS data")
+        ser = serial.Serial(port, baudrate = 9600, timeout = 0.5)
+        loop = 0
+        interval = 10 # amount of seconds
+        while True:
+              
+              data = ser.readline()
+              #print (data)
+              #mainFrame = MainFrame()
+              #self.parseGPS(data)                    
+              #print ("raw:", data) #prints raw data raw: b'$GPRMC,190722.00,A,2617.12440,S,02804.24041,E,0.118,,140323,,,D*64\r\n'
+              #print (">>>> ",data[0:6])
+              if data[0:6] == b'$GPRMC':
+                 #print ("got GPRMC")
+                 data2 = data.decode("utf-8") 
+                 sdata = data2.split(",")
+                 #print("sdata = " ,sdata)
+                 x = sdata[1].split(".")
+                 head = x[0]
+                 tail = x[1]
+                 deg = head[0:-2]    
+                 min = head[-2:]
+                 #print ("sdata = " , deg + " deg " + min + "." + tail + " min" )
+                 if sdata[2] == 'V':
+                    print ("no satellite data available")
+                    return
+                 #print ("---Parsing GPRMC---",)
+              
+                 time = sdata[1][0:2] + ":" + sdata[1][2:4] + ":" + sdata[1][4:6]
+                 lat = WorkerStreamming.decode(sdata[3]) #latitude
+                 dirLat = sdata[4]      #latitude direction N/S
+                 lon = WorkerStreamming.decode(sdata[5]) #longitute
+                 dirLon = sdata[6]      #longitude direction E/W
+                 speed = sdata[7]       #Speed in knots
+                 trCourse = sdata[8]    #True course
+                 date = sdata[9][0:2] + "/" + sdata[9][2:4] + "/" + sdata[9][4:6]#date
+                 
+                 if loop == interval:
+                    rfPower = WorkerStreamming.getRFSignal()
+                    try:
+                       with open('geo_rf.csv', 'a', encoding='UTF8', newline='') as file:
+                          writer = csv.writer(file)
+                          #row = [
+                          writer.writerow([time,lat,dirLat,lon,dirLon,speed,trCourse,date,rfPower])
+                    except Exception as e:
+                       print("Oops!  canot write to file...")      
+                    print ("time : %s, latitude : %s(%s), longitude : %s(%s), speed : %s, True Course : %s, Date : %s, rfPower : %s" %  (time,lat,dirLat,lon,dirLon,speed,trCourse,date,rfPower))
+                    loop = 0 # reset seconds
+                 loop = loop + 1
+                 print (loop)
+                 #print("rf power = ", rfPower)
 if __name__ == '__main__':
     # When this module is run (not imported) then create the app, the
     # frame, show it, and start the event loop.
+    event = Event()
+    queue = Queue()
     app = wx.App()
+    threadStreem = WorkerStreamming(event)
     frm = MainFrame(None, title='Geo Heatmap recorder')
 #    frm = MyHtmlFrame(None, "Simple HTML File Viewer")  
     frm.Show()
+    #mainFrame = MainFrame()
+    #mainFrame.readGPS()
+    #time.sleep(0.1)
 #    @limit_calls(9)
 #    def power_meter_callback(samples, sdr):
 #        print ('relative power: %0.1f dB' % (10*log10(var(samples))))
