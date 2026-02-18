@@ -19,5 +19,7 @@ The aplication logs the signal strent while you driving and will then overy the 
     rtlsdr
     sys
     
-    
-    
+ # Environment
+    python3 -m venv geo/
+    source geo/bin/activate
+
