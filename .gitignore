@@ -1,2 +1,9 @@
 # ignore all files in any directory named geo 
 geo/
+venv/
+.env/
+
+# Python cache
+__pycache__/
+*.pyc
+
