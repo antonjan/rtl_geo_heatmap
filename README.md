@@ -23,4 +23,6 @@ The aplication logs the signal strent while you driving and will then overy the 
     export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libstdc++.so.6
     python3 -m venv geo/
     source geo/bin/activate
+    pip install pyrtlsdr
+
 
