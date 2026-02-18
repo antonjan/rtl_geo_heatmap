@@ -4,7 +4,11 @@ The code is writin in Python3
 # Project Status.
 The project just started 8 Feb 2023
 Not all the fucktionality is working yet.
-# Screenshot![Alt text](images/gio_map.jpg?raw=true "Geo Heatmap")<br>
+# Screenshot
+![Alt text](images/gio_map.jpg?raw=true "Geo Heatmap")<br>
+![Alt text](Geo_app_1.png?raw=true "Geo Heatmap")<br>
+![Alt text](Geo_app_2.png?raw=true "Geo Heatmap")<br>
+![Alt text](Geo_app_3.png?raw=true "Geo Heatmap")<br>
 
 # Description of what this Application will do.
 If you use and RTL-SDR donge and a USB GPS you can then connect this to a laptop with an external mobile antenna and the application will map the RF signel strenth of a transmitter on a map.
