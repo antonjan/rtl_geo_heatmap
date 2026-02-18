@@ -20,7 +20,8 @@ The aplication logs the signal strent while you driving and will then overy the 
     sys
     
  # Environment
- Needs python 3.12
+ Needs python 3.12<br>
+    
     sudo apt install rtl-sdr librtlsdr-dev
     export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libstdc++.so.6
     python3 -m venv geo/
