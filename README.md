@@ -28,5 +28,8 @@ The aplication logs the signal strent while you driving and will then overy the 
     source geo/bin/activate
     pip install pyrtlsdr
     pip install setuptools==80.9.0
+# Execution
 
+    python ./geo_heatmap_3_12.py
+    
 
