@@ -6,8 +6,8 @@ The project just started 8 Feb 2023
 Not all the fucktionality is working yet.
 # Screenshot
 ![Alt text](images/gio_map.jpg?raw=true "Geo Heatmap")<br>
-![Alt text](Geo_app_1.png?raw=true "Geo Heatmap")<br>
-![Alt text](Geo_app_2.png?raw=true "Geo Heatmap")<br>
+![Alt text](geo_app_1.png?raw=true "Geo Heatmap")<br>
+![Alt text](geo_app_2.png?raw=true "Geo Heatmap")<br>
 ![Alt text](Geo_app_3.png?raw=true "Geo Heatmap")<br>
 
 # Description of what this Application will do.
